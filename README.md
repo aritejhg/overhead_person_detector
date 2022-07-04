@@ -6,3 +6,6 @@ The model used is YOLOv5, trained on the Top View Multi Person and Sunmi in-offi
 The model is then converted to a OpenVino model for improved performance with an accompanying script for detection due to the use of Intel CPU, and passing a boolean True/False for detection of people to the MiR robot integration on a FlaskJS server.
 
 After training 50 epochs, model achieves mAP 0.5:0.95 of 0.7 and mAP 0.5 of 0.97. Results are available at [Weights and Biases](https://wandb.ai/aribic/YOLOv5/runs/auasy8xw/overview).
+
+To improve, YOLO-OBB can be used for oriented bounding boxes, however performance is still good on this version.
+
