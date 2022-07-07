@@ -7,5 +7,8 @@ The model is then converted to a OpenVino model for improved performance with an
 
 After training 50 epochs, model achieves mAP 0.5:0.95 of 0.7 and mAP 0.5 of 0.97. Results are available at [Weights and Biases](https://wandb.ai/aribic/YOLOv5/runs/auasy8xw/overview).
 
+Detection is mainly based on work from https://github.com/SamSamhuns/yolov5_export_cpu, but has been improved to use OpenVino Runtime API 2.0
+Performance is ~3FPS on Intel i5-8265U.
+
 To improve, YOLO-OBB can be used for oriented bounding boxes, however performance is still good on this version.
 
