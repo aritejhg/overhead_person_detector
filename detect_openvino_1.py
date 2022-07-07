@@ -14,12 +14,6 @@ def load_model(model_xml_path: str, model_bin_path: str, target_device: str = "C
     # load IECore object
     OVIE = ov.Core()
 
-    # # load CPU extensions if available
-    # lib_ext_path = '/opt/intel/openvino/inference_engine/lib/intel64/libcpu_extension.so'
-    # if 'CPU' in target_device and os.path.exists(lib_ext_path):
-    #     print(f"Loading CPU extensions from {lib_ext_path}")
-    #     OVIE.add_extension(lib_ext_path, "CPU")
-
     # load openVINO network
     OVNet = OVIE.read_model(
         model=model_xml_path, weights=model_bin_path)
@@ -42,10 +36,7 @@ def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: 
     input_blob = next(iter(OVExec.inputs))
     OutputLayer = list(OVExec.outputs)[-1]
     if debug:
-        print("Input Layer: ", input_blob)
-        print("Output Layer: ", OutputLayer)
-        print("Model Input Shape: ",
-            input_blob.shape)
+        print("Model Input Shape: ",  input_blob.shape)
         print("Model Output Shape: ", OutputLayer.shape)
 
     if output_dir is not None:
@@ -74,7 +65,7 @@ def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: 
             print('Estimated Inference FPS: {} FPS Single Image'.format(fps))
 
         detections = non_max_suppression(
-            output_data, conf_thres=0.4, iou_thres=0.5)
+            output_data, conf_thres=threshold, iou_thres=0.5)
         
         if save:
             save_path = os.path.join(
@@ -85,7 +76,7 @@ def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: 
 
 
     if debug:    
-        print(f'{detections[0].shape[0]} people detected')
+        print(f'{detections[0].shape[0]} people are detected')
         elapse_time = time.time() - start_time
         print(f'Total Frames: {i}')
         print(f'Total Elapsed Time: {elapse_time:.3f} Seconds'.format())
@@ -97,7 +88,7 @@ base_path = "C:/Users/arite/Desktop/KMBIC/Collins Aerospace final codes/499-peop
 OVExec = load_model(
     model_xml_path= base_path + "overhead_person_detector/best_openvino_model/best.xml", 
     model_bin_path= base_path + "overhead_person_detector/best_openvino_model/best.bin", 
-    target_device= "CPU",)
+    target_device= "CPU")
 
 inference(
     input_path= base_path + "valid/images/image1_jpg.rf.0a61c1987729ab9e39926aeb6468fade.jpg",
