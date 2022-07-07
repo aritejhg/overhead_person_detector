@@ -14,7 +14,7 @@ def load_model(model_xml_path: str, model_bin_path: str, target_device: str = "C
     # load IECore object
     OVIE = ov.Core()
 
-    # # load CPU extensions if availabel
+    # # load CPU extensions if available
     # lib_ext_path = '/opt/intel/openvino/inference_engine/lib/intel64/libcpu_extension.so'
     # if 'CPU' in target_device and os.path.exists(lib_ext_path):
     #     print(f"Loading CPU extensions from {lib_ext_path}")
@@ -85,13 +85,13 @@ def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: 
 
 
     if debug:    
-        print(detections[0].shape[0])
+        print(f'{detections[0].shape[0]} people detected')
         elapse_time = time.time() - start_time
         print(f'Total Frames: {i}')
         print(f'Total Elapsed Time: {elapse_time:.3f} Seconds'.format())
         print(f'Final Estimated FPS: {i / (elapse_time):.2f}')
 
-    print(detections[0].shape[0]>0)
+    return detections[0].shape[0]>0
 base_path = "C:/Users/arite/Desktop/KMBIC/Collins Aerospace final codes/499-people-v1/"
 
 OVExec = load_model(
