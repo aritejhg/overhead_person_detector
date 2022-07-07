@@ -85,22 +85,23 @@ def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: 
 
 
     if debug:    
-        print(detections[0].shape)
+        print(detections[0].shape[0])
         elapse_time = time.time() - start_time
         print(f'Total Frames: {i}')
         print(f'Total Elapsed Time: {elapse_time:.3f} Seconds'.format())
         print(f'Final Estimated FPS: {i / (elapse_time):.2f}')
 
+    print(detections[0].shape[0]>0)
 base_path = "C:/Users/arite/Desktop/KMBIC/Collins Aerospace final codes/499-people-v1/"
 
 OVExec = load_model(
-    model_xml_path= base_path + "best_openvino_model/best.xml", 
-    model_bin_path= base_path + "best_openvino_model/best.bin", 
+    model_xml_path= base_path + "overhead_person_detector/best_openvino_model/best.xml", 
+    model_bin_path= base_path + "overhead_person_detector/best_openvino_model/best.bin", 
     target_device= "CPU",)
 
 inference(
     input_path= base_path + "valid/images/image1_jpg.rf.0a61c1987729ab9e39926aeb6468fade.jpg",
     OVExec= OVExec,
-    output_dir= base_path + "best_openvino_model/output", 
+    output_dir= base_path + "overhead_person_detector/best_openvino_model/output", 
     threshold= 0.6,
     debug= True)
