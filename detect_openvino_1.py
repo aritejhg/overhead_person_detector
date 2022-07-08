@@ -1,12 +1,9 @@
 import os
 import time
-import argparse
 from functools import partial
 import cv2
 import torch
-import openvino
 import openvino.runtime as ov
-import numpy as np
 
 from utils.detector_utils import DataStreamer, save_output, non_max_suppression, preprocess_image
 
@@ -91,8 +88,8 @@ OVExec = load_model(
     target_device= "CPU")
 
 inference(
-    input_path= base_path + "valid/images/image1_jpg.rf.0a61c1987729ab9e39926aeb6468fade.jpg",
+    input_path= "C:/Users/arite/Desktop/mx10-23-215-226_1970-01-04_080408.jpg",
     OVExec= OVExec,
-    output_dir= base_path + "overhead_person_detector/best_openvino_model/output", 
-    threshold= 0.6,
-    debug= True)
+    output_dir= base_path + "overhead_person_detector/best_openvino_model/output1", 
+    threshold= 0.1,
+    debug= True, save = True)
