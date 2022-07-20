@@ -63,10 +63,10 @@ def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: 
 
         detections = non_max_suppression(
             output_data, conf_thres=threshold, iou_thres=0.5)
-        
+        print (detections)
         if save:
             save_path = os.path.join(
-                output_dir, f"frame_openvino_{str(i).zfill(5)}.jpg")
+                output_dir, f"{input_path.split('/')[-1]}") 
             save_output(detections[0], orig_input, save_path,
                         threshold=threshold, model_in_HW=(H, W),
                         line_thickness=None, text_bg_alpha=0.0)
@@ -80,16 +80,18 @@ def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: 
         print(f'Final Estimated FPS: {i / (elapse_time):.2f}')
 
     return detections[0].shape[0]>0
+    
 base_path = "C:/Users/arite/Desktop/KMBIC/Collins Aerospace final codes/499-people-v1/"
 
 OVExec = load_model(
     model_xml_path= base_path + "overhead_person_detector/best_openvino_model/best.xml", 
     model_bin_path= base_path + "overhead_person_detector/best_openvino_model/best.bin", 
     target_device= "CPU")
-
-inference(
-    input_path= "C:/Users/arite/Desktop/mx10-23-215-226_1970-01-04_080408.jpg",
-    OVExec= OVExec,
-    output_dir= base_path + "overhead_person_detector/best_openvino_model/output1", 
-    threshold= 0.1,
-    debug= True, save = True)
+import fnmatch
+for input in fnmatch.filter(os.listdir("C:/Users/arite/Desktop/KMBIC/cropped_test_set/"), '*.jpg'):
+    inference(
+        input_path= f"C:/Users/arite/Desktop/KMBIC/cropped_test_set/{input}",
+        OVExec= OVExec,
+        output_dir= "C:/Users/arite/Desktop/KMBIC/cropped_test_set/" + "/test", 
+        threshold= 0.65,
+        debug= True, save = True)
