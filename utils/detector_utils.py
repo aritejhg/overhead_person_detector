@@ -9,6 +9,7 @@ import os.path as osp
 from typing import Callable
 
 CLASS_LABELS = ['person']
+COORDS = [[231,340],[491,320],[751,344],[938,571],[644,847],[298,856],[23,597],[115,450],[231,350]]
 
 class DataStreamer(object):
 
@@ -82,17 +83,32 @@ class DataStreamer(object):
         raise StopIteration
 
 
+def apply_mask(img: cv2.image, coords: list = COORDS) -> cv2.image:
+    """
+    Imports the image --> creates mask --> applies mask --> returns image
+    list of coord: [[coord1 width, coord1 height],[],....]
+    """
+    mask = np.zeros(img.shape[:2], dtype=np.int8)
+    shape = np.array(coords, np.int32)
+    cv2.fillConvexPoly(mask, shape, 1)
+    # apply our mask 
+    masked = cv2.bitwise_and(img, img, mask=mask)
+    return masked
+
+
 def preprocess_image(
     cv2_img: np.ndarray,
-    in_size: Tuple[int, int] = (960, 960)
+    in_size: Tuple[int, int] = (960, 960),
+    coords: list = COORDS
 ) -> np.ndarray:
     """preprocesses cv2 image and returns a norm np.ndarray
 
         cv2_img = cv2 image
         in_size: in_width, in_height
     """
-    resized = pad_resize_image(cv2_img, in_size)
-    img_in = np.transpose(resized, (2, 0, 1)).astype('float32')  # HWC -> CHW
+    resized = center_crop_img(cv2_img, in_size)
+    masked = apply_mask(resized, coords)
+    img_in = np.transpose(masked, (2, 0, 1)).astype('float32')  # HWC -> CHW
     img_in /= 255.0
     return img_in
 
@@ -155,8 +171,8 @@ def save_output(
 
 def non_max_suppression(
     prediction: torch.Tensor,
-    conf_thres: float = 0.25,
-    iou_thres: float = 0.45,
+    conf_thres: float = 0.55,
+    iou_thres: float = 0.6,
     classes: Optional[torch.Tensor] = None,
     # agnostic: bool = False,
     # multi_label: bool = False,
@@ -270,6 +286,18 @@ def pad_resize_image(
                                          value=color)
     return pad_resized_img
 
+def center_crop_img(
+    cv2_img: np.ndarray,
+    new_size: Tuple[int, int] = (960, 960)) -> np.ndarray:
+    """
+    Given a new size and cv2 image, crops into the center of the image
+    """
+    in_h, in_w = cv2_img.shape[:2]
+    new_w, new_h = new_size
+    h_diff = int((in_h - new_h)/2)
+    w_diff = int((in_w-new_w)/2)
+    cropped_img = cv2_img[h_diff:h_diff + new_h, w_diff:w_diff + new_w]
+    return cropped_img
 
 def clip_coords(
     boxes: Union[torch.Tensor, np.ndarray],
