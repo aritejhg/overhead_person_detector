@@ -4,12 +4,16 @@ from functools import partial
 from xmlrpc.client import boolean
 import torch
 import openvino.runtime as ov
+from zmq import device
 
 from detector_utils import DataStreamer, save_output, non_max_suppression, preprocess_image
 
+# COORDS for masking
 COORDS = [[231,340],[491,320],[751,344],[938,571],[644,847],[298,856],[23,597],[115,450],[231,350]]
 
 def load_model(model_xml_path: str, model_bin_path: str, target_device: str = "CPU"):
+    """
+    Returns an executable OpenVino model given the xml and weights bin file paths"""
     # load IECore object
     OVIE = ov.Core()
 
@@ -19,14 +23,16 @@ def load_model(model_xml_path: str, model_bin_path: str, target_device: str = "C
 
     # create executable network
     OVExec = OVIE.compile_model(
-        OVNet, "CPU")
+        OVNet, target_device)
     print("Available Devices: ", OVIE.available_devices)
 
     return OVExec
 
 
-def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: bool = False, debug: bool = False) -> boolean:
-    """Run Object Detection Application
+def inference(input_path: str, OVExec, output_dir: str, conf_threshold: float = 0.55, iou_threshold: float = 0.6, save: bool = False, debug: bool = False) -> boolean:
+    """Run Object Detection Application on an OpenVino executable network. 
+    Takes in the img path, executable model, output path, confidence threshold, iou threshold, save and debug options. 
+    Returns a boolean to tell if people are present in the region.
     """
     if debug:
         print("Running Inference for {}: {}".format("image",input_path))
@@ -38,14 +44,20 @@ def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: 
         print("Model Input Shape: ",  input_blob.shape)
         print("Model Output Shape: ", OutputLayer.shape)
 
+    # make output directory
     if output_dir is not None:
         os.makedirs(output_dir, exist_ok=True)
 
+    #init datastream
     start_time = time.time()
     _, C, H, W = input_blob.shape
+
+    #create the preprocessing function and DataStream
     preprocess_func = partial(preprocess_image, in_size=(W, H))
     data_stream = DataStreamer(input_path, "image", preprocess_func)
     OVExec.batch_size = 1
+
+    #start inference
     for i, (orig_input, model_input) in enumerate(data_stream, start=1):
         if debug:
             start = time.time()
@@ -63,15 +75,20 @@ def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: 
             fps = 1. / (end - start)
             print('Estimated Inference FPS: {} FPS Single Image'.format(fps))
 
+        # Takes the raw output torch.tensor from output_data, applies NMS to give the final detections in the form of [n,6] matrix where n is number of people.
+        # for each detection, xyxy confidence and class are provided.
         detections = non_max_suppression(
-            output_data, conf_thres=threshold, iou_thres=0.6)
+            output_data, conf_thres=conf_threshold, iou_thres=iou_threshold)
+
         if debug:
             print (detections)
+        
+        # saves output onto the original image if necessary        
         if save:
             save_path = os.path.join(
                 output_dir, f"{input_path.split('/')[-1]}") 
             save_output(detections[0], orig_input, save_path,
-                        threshold=threshold, model_in_HW=(H, W),
+                        threshold=conf_threshold, model_in_HW=(H, W),
                         line_thickness=None, text_bg_alpha=0.0)
 
 
@@ -82,6 +99,7 @@ def inference(input_path: str, OVExec, output_dir: str, threshold: float, save: 
         print(f'Total Elapsed Time: {elapse_time:.3f} Seconds'.format())
         print(f'Final Estimated FPS: {i / (elapse_time):.2f}')
 
+    #returns if people are detected, as detections is a [n,6] matrix where n is number of people detected
     return detections[0].shape[0]>0
 
 
