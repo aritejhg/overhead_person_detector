@@ -5,7 +5,7 @@ from xmlrpc.client import boolean
 import torch
 import openvino.runtime as ov
 
-from utils.detector_utils import DataStreamer, save_output, non_max_suppression, preprocess_image
+from detector_utils import DataStreamer, save_output, non_max_suppression, preprocess_image
 
 COORDS = [[231,340],[491,320],[751,344],[938,571],[644,847],[298,856],[23,597],[115,450],[231,350]]
 
